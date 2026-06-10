@@ -52,6 +52,10 @@ type App struct {
 }
 
 func (app App) ProcessGPXFileUpload(fileBytes []byte) (*os.File, error) {
+	return saveFile(fileBytes)
+}
+
+func saveFile(fileBytes []byte) (*os.File, error) {
 	tempFile, err := os.CreateTemp(".", "upload-*.gpx")
 	if err != nil {
 		return nil, fmt.Errorf("failed creating temp file: %s", err)
