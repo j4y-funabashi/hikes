@@ -9,7 +9,15 @@ import (
 	"os"
 )
 
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+}
+
 func handleGpxUpload(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+
 	logger := slog.Default()
 	app := App{
 		logger: logger,
@@ -52,7 +60,11 @@ type App struct {
 }
 
 func (app App) ProcessGPXFileUpload(fileBytes []byte) (*os.File, error) {
+	// save file
 	return saveFile(fileBytes)
+	// parse gpx info
+	// generate static map
+	// save to db
 }
 
 func saveFile(fileBytes []byte) (*os.File, error) {
@@ -61,7 +73,6 @@ func saveFile(fileBytes []byte) (*os.File, error) {
 		return nil, fmt.Errorf("failed creating temp file: %s", err)
 	}
 	defer tempFile.Close()
-	tempFile.Name()
 
 	_, err = tempFile.Write(fileBytes)
 	if err != nil {
