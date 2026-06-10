@@ -37,34 +37,40 @@ func handleGpxUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = app.ProcessGPXFileUpload(fileBytes)
+	gpxFile, err := app.ProcessGPXFileUpload(fileBytes)
 	if err != nil {
 		logger.Error("failed processing gpx file upload", "err", err)
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
+
+	logger.Info("file uploaded", "filename", gpxFile.Name())
 }
 
 type App struct {
 	logger *slog.Logger
 }
 
-func (app App) ProcessGPXFileUpload(fileBytes []byte) error {
+func (app App) ProcessGPXFileUpload(fileBytes []byte) (*os.File, error) {
 	tempFile, err := os.CreateTemp(".", "upload-*.gpx")
 	if err != nil {
-		return fmt.Errorf("failed creating temp file: %s", err)
+		return nil, fmt.Errorf("failed creating temp file: %s", err)
 	}
 	defer tempFile.Close()
+	tempFile.Name()
 
 	_, err = tempFile.Write(fileBytes)
 	if err != nil {
-		return fmt.Errorf("failed writing to temp file: %s", err)
+		return nil, fmt.Errorf("failed writing to temp file: %s", err)
 	}
 
-	return nil
+	return tempFile, nil
 }
 
 func main() {
+	port := ":8080"
+	slog.Info("Starting hikes server", "port", port)
+
 	http.HandleFunc("/gpx", handleGpxUpload)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(port, nil))
 }
