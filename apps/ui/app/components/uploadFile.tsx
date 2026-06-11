@@ -1,33 +1,32 @@
-'use client'
+"use client";
 
 import { ChangeEvent, useState } from "react";
 
 export default function UploadGpxForm() {
-
-  const [file, setFile] = useState<File | null>(null)
+  const [file, setFile] = useState<File | null>(null);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setFile(e.target.files[0])
+      setFile(e.target.files[0]);
     }
-  }
+  };
 
   const handleFileUpload = async () => {
-    const url = "http://localhost:8080/gpx"
+    const url = "http://localhost:8080/gpx";
     if (!file) {
-      return
+      return;
     }
 
     const formData = new FormData();
-    formData.append("file", file)
+    formData.append("file", file);
 
     const response = await fetch(url, {
       method: "POST",
-      body: formData
-    })
+      body: formData,
+    });
 
-    console.log(response.status)
-  }
+    setFile(null);
+  };
 
   return (
     <div>
@@ -43,7 +42,6 @@ export default function UploadGpxForm() {
           <dd>{(file.size / 1024).toFixed(2)}KB</dd>
         </dl>
       )}
-
     </div>
   );
 }

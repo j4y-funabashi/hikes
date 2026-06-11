@@ -1,12 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"log/slog"
 	"net/http"
-	"os"
+
+	"github.com/j4y_funabashi/hikes/apps/api/pkg/app"
+)
+
+const (
+	FitFileArchiveDir = "/archive"
 )
 
 func enableCors(w *http.ResponseWriter) {
@@ -19,9 +23,6 @@ func handleGpxUpload(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 
 	logger := slog.Default()
-	app := App{
-		logger: logger,
-	}
 
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
@@ -30,7 +31,7 @@ func handleGpxUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, _, err := r.FormFile("file")
+	file, fileHeader, err := r.FormFile("file")
 	if err != nil {
 		logger.Error("failed parsing form file", "err", err)
 		http.Error(w, "", http.StatusInternalServerError)
@@ -45,41 +46,9 @@ func handleGpxUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gpxFile, err := app.ProcessGPXFileUpload(fileBytes)
-	if err != nil {
-		logger.Error("failed processing gpx file upload", "err", err)
-		http.Error(w, "", http.StatusInternalServerError)
-		return
-	}
+	app.ProcessFileUpload(fileBytes, fileHeader.Filename, FitFileArchiveDir)
 
-	logger.Info("file uploaded", "filename", gpxFile.Name())
-}
-
-type App struct {
-	logger *slog.Logger
-}
-
-func (app App) ProcessGPXFileUpload(fileBytes []byte) (*os.File, error) {
-	// save file
-	return saveFile(fileBytes)
-	// parse gpx info
-	// generate static map
-	// save to db
-}
-
-func saveFile(fileBytes []byte) (*os.File, error) {
-	tempFile, err := os.CreateTemp(".", "upload-*.gpx")
-	if err != nil {
-		return nil, fmt.Errorf("failed creating temp file: %s", err)
-	}
-	defer tempFile.Close()
-
-	_, err = tempFile.Write(fileBytes)
-	if err != nil {
-		return nil, fmt.Errorf("failed writing to temp file: %s", err)
-	}
-
-	return tempFile, nil
+	logger.Info("file uploaded", "name", fileHeader.Filename)
 }
 
 func main() {
